@@ -1,57 +1,40 @@
 <?php
 /*
-Plugin Name: PMPro Customization: Remove invoices
-Plugin URI: https://github.com/MiquelAdell/PMPro-Customization-Remove-invoices
-Description: Remove invoices from PMPro
+Plugin Name: PMPro Customization: Add NIF
+Plugin URI: https://github.com/MiquelAdell/PMPro-Customization-Add-NIF
+Description: Add NIF requisite on new subscriptions
 Version: .1
 Author: Miquel Adell
 Author URI: http://www.miqueladell.com
 */
-
-/*
- * the confirmation tempalte has extensive invoice references so we are
- * replacing it whole
- */
-function my_pmpro_pages_shortcode_confirmation($content) {
-	ob_start();
-	include(plugin_dir_path(__FILE__) . "templates/confirmation.php");
-	$temp_content = ob_get_contents();
-	ob_end_clean();
-	return $temp_content;
-}
-add_filter("pmpro_pages_shortcode_confirmation", "my_pmpro_pages_shortcode_confirmation");
-
-
-function my_pmpro_pages_shortcode_account($content) {
-	ob_start();
-	include(plugin_dir_path(__FILE__) . "templates/account.php");
-	$temp_content = ob_get_contents();
-	ob_end_clean();
-	return $temp_content;
-}
-add_filter("pmpro_pages_shortcode_account", "my_pmpro_pages_shortcode_account");
-
-
-/*
- * the pmpro_account shortcode is quite complex so we are using the full HTML
- * and just hiding relevant invoicing sections with inline CSS
- */
-function overwrite_pmpro_account_shortcode() {
-	function custom_pmpro_shortcode_account($atts, $content=null, $code="") {
-		ob_start()
-		?>
-		<style>
-			#pmpro_account-invoices {
-				display: none;
-			}
-		</style>
-		<?php
-		pmpro_shortcode_account($atts, $content, $code);
-		$content = ob_get_contents();
-		ob_end_clean();
-		return $content;
+//we have to put everything in a function called on init, so we are sure Register Helper is loaded
+function my_pmprorh_init()
+{
+	//don't break if Register Helper is not loaded
+	if(!function_exists( 'pmprorh_add_registration_field' )) {
+		return false;
 	}
-	remove_shortcode('pmpro_account');
-	add_shortcode('pmpro_account', 'custom_pmpro_shortcode_account');
+
+	//define the fields
+	$fields = array();
+	$fields[] = new PMProRH_Field(
+		'nif',						// input name, will also be used as meta key
+		'text',							// type of field
+		array(
+			'label'		=> __('NIF','pmpro-custom-add-nif')	,		// custom field label
+			'size'		=> 40,				// input size
+			'class'		=> 'nif',			// custom class
+			'profile'	=> true,			// show in user profile
+			'required'	=> true			// make this field required
+		)
+	);
+
+	//add the fields into a new checkout_boxes are of the checkout page
+	foreach($fields as $field)
+		pmprorh_add_registration_field(
+			'after_billing_fields',			// location on checkout page
+			$field						// PMProRH_Field object
+		);
+	//that's it. see the PMPro Register Helper readme for more information and examples.
 }
-add_action( 'init', 'overwrite_pmpro_account_shortcode' );
+add_action( 'init', 'my_pmprorh_init' );
