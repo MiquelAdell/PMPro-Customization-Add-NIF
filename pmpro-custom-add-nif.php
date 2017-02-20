@@ -25,6 +25,7 @@ function my_pmprorh_init()
 			'size'		=> 40,				// input size
 			'class'		=> 'nif',			// custom class
 			'profile'	=> true,			// show in user profile
+			"memberslistcsv"    =>  true,                  // Let field be included in "Member List" CSV export (true | false)
 			'required'	=> true			// make this field required
 		)
 	);
